@@ -1,6 +1,7 @@
 version: "3.9"
 services:
-  web:
+  welcome-home:
+    image: welcome-home:latest
     build: .
     ports:
       - "4321:4321"

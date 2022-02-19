@@ -2,6 +2,7 @@ FROM ubuntu:latest
 WORKDIR /usr/local/welcome-home
 
 SHELL [ "bash", "-c" ]
+
 # Set node into production mode
 RUN echo export NODE_ENV=production >> ~/.bash_profile
 RUN source ~/.bash_profile
@@ -16,20 +17,26 @@ RUN npm install -g yarn
 RUN mkdir src
 RUN mkdir app
 
-RUN git clone https://github.com/LucasionGS/welcome-home.git src/welcome-home
-RUN git clone https://github.com/LucasionGS/welcome-home-api.git src/welcome-home-api
+RUN git clone https://github.com/LucasionGS/welcome-home.git src/ui
+RUN git clone https://github.com/LucasionGS/welcome-home-api.git src/api
 
-RUN cd ./src/welcome-home && yarn install && yarn build
-RUN cd ./src/welcome-home-api && npm install && npm run build
+COPY update.sh .
 
-RUN cp -a src/welcome-home-api/dist app/dist
-RUN cp -a src/welcome-home-api/node_modules app/node_modules
-RUN cp src/welcome-home-api/package.json app/package.json
-RUN cp -a src/welcome-home/build app/public
+# Update the repositories, install dependencies, and build them.
+RUN chmod +x update.sh && ./update.sh
 
-# Remove the src folder
-RUN rm -rf src
+# Link up the frontend and backend
+RUN ln -s `pwd`/src/ui/build src/api/public
+
+# Updates should take effect immediately after restart.
+# For updating it should
+# - Pull repositories
+# - Frontend: Run yarn install
+# - Frontend: Run yarn build
+# - Backend: Run npm install
+# - Backend: Run npm run build
+# Restart backend
 
 EXPOSE 4321
 
-CMD [ "node", "app/dist/index.js" ]
+CMD [ "node", "src/api/dist/index.js", "--docker" ]
